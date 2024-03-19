@@ -1,0 +1,17 @@
+# letsencrypt 임시 폴더 및 로그
+letsencrypt
+certbot.log
+
+# 인증서 파일
+*.pem
+*.crt
+*.key
+*.p12
+*.pfx
+*.cer
+*.p7b
+*.p7c
+
+# 패스워드 및 비밀 키 파일
+.secret
+.env
