@@ -1,0 +1,26 @@
+global:
+  scrape_interval:     5s
+  evaluation_interval: 5s
+
+rule_files:
+  - 'prometheus.rules.yml'
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: timber-mq-kafka-exporter
+    static_configs:
+     - targets: [ "timber-mq-kafka-exporter:9308" ]
+#  - job_name: timber-mq-kafka-1-jmx
+#    static_configs:
+#      - targets: [ "timber-mq-kafka-1:9091" ]
+#  - job_name: timber-mq-kafka-2-jmx
+#    static_configs:
+#      - targets: [ "timber-mq-kafka-2:9091" ]
+#  - job_name: timber-mq-kafka-3-jmx
+#    static_configs:
+#      - targets: [ "timber-mq-kafka-3:9091" ]
+#  - job_name: timber-mq-zookeeper
+#    static_configs:
+#      - targets: [ "timber-mq-zookeeper:9091" ]

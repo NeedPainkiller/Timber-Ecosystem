@@ -1,0 +1,492 @@
+version: "3.8"
+
+networks:
+  timber-bridge:
+    driver: bridge
+
+services:
+  #  timber-server-nginx:
+  #    image: nginx:latest
+  #    container_name: timber-server-nginx
+  #    restart: always
+  #    #    network_mode: "slirp4netns:allow_host_loopback=true,port_handler=slirp4netns"
+  #    networks:
+  #      - timber-bridge
+  ##        ipv4_address: 10.88.0.1
+  #    ports:
+  #      - 20080:80
+  #      - 20443:443
+  #    volumes:
+  #      - ./server/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #      - ./server/nginx/http.conf:/etc/nginx/http.conf:ro
+  #      - ./server/nginx/ssl.conf:/etc/nginx/ssl.conf:ro
+  #      - ./server/nginx/server.conf:/etc/nginx/server.conf:ro
+  #      - ./server/nginx/reverse-proxy.conf:/etc/nginx/reverse-proxy.conf:ro
+  #      - ./server/nginx/logs:/var/log/nginx/
+  #      - ./cert/ssl.pem:/etc/cert/ssl.pem:ro
+  #      - ./cert/ssl.key:/etc/cert/ssl.key:ro
+  #    environment:
+  #      - TZ=Asia/Seoul
+
+  timber-db-postgresql:
+    image: postgres:16.2
+    container_name: timber-db-postgresql
+    restart: always
+    networks:
+      - timber-bridge
+    shm_size: 128mb
+    ports:
+      - 25432:5432
+    volumes:
+      - ./database/postgresql/data:/var/lib/postgresql/data
+      - ./database/postgresql/init:/docker-entrypoint-initdb.d
+      - ./database/postgresql/logs:/var/log/postgresql
+      - ./database/postgresql/conf:/etc/postgresql
+    environment:
+      POSTGRES_USER: timber
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: timber
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: Asia/Seoul
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C.utf8 --lc-ctype=C.utf8'
+
+  #  timber-db-mysql:
+  #    image: mysql:8.3.0
+  #    container_name: timber-db-mysql
+  #    restart: always
+  #    networks:
+  #      - timber-bridge
+  #    shm_size: 128mb
+  #    ports:
+  #      - 23306:3306
+  #    volumes:
+  #      - ./database/mysql/my.cnf:/etc/mysql/my.cnf
+  #      - ./database/mysql/data:/var/lib/mysql
+  #      - ./database/mysql/init:/docker-entrypoint-initdb.d
+  #      - ./database/mysql/logs:/var/log/mysql
+  #    environment:
+  #      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+  #      MYSQL_DATABASE: timber
+  #      MYSQL_USER: timber
+  #      MYSQL_PASSWORD: ${DB_PASSWORD}
+  #      TZ: Asia/Seoul
+  #    command:
+  #      - --character-set-server=utf8mb4
+  #      - --collation-server=utf8mb4_unicode_ci
+  #      - --lower_case_table_names=1
+
+  timber-db-mariadb:
+    image: mariadb:11.3.2-jammy
+    container_name: timber-db-mariadb
+    restart: always
+    networks:
+      - timber-bridge
+    shm_size: 128mb
+    ports:
+      - 23307:3306
+    volumes:
+      - ./database/mariadb/data/data:/var/lib/mysql
+      - ./database/mariadb/data/init:/docker-entrypoint-initdb.d
+      - ./database/mariadb/data/logs:/var/log/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_HOST: localhost
+      MARIADB_DATABASE: timber
+      MARIADB_USER: timber
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --lower_case_table_names=1
+      - --max-allowed-packet=512M
+      - --net-buffer-length=5048576
+
+  timber-db-mariadb-audit:
+    image: mariadb-audit
+    container_name: timber-db-mariadb-audit
+    restart: always
+    networks:
+      - timber-bridge
+    shm_size: 128mb
+    ports:
+      - 23308:3306
+    volumes:
+      - ./database/mariadb-audit/data/data:/var/lib/mysql
+      - ./database/mariadb-audit/data/init:/docker-entrypoint-initdb.d
+      - ./database/mariadb-audit/data/logs:/var/log/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: passwd
+      MARIADB_ROOT_HOST: localhost
+      MARIADB_DATABASE: timber-audit
+      MARIADB_USER: timber
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --lower_case_table_names=1
+      - --max-allowed-packet=512M
+      - --net-buffer-length=5048576
+
+
+  #  timber-db-mariadb-1:
+  #    image: mariadb:11.3.2-jammy
+  #    container_name: timber-db-mariadb-1
+  #    restart: always
+  #    networks:
+  #      - timber-bridge
+  #    shm_size: 128mb
+  #    expose:
+  #      - 3306
+  #    ports:
+  #      - 23316:3306
+  #    volumes:
+  #      - ./database/mariadb/node1/data:/var/lib/mysql
+  #      - ./database/mariadb/node1/init:/docker-entrypoint-initdb.d
+  #      - ./database/mariadb/node1/logs:/var/log/mysql
+  #      - ./database/mariadb/node1/conf/galera.cnf:/etc/mysql/mariadb.conf.d/galera.cnf
+  #    environment:
+  #      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+  #      MARIADB_DATABASE: timber
+  #      MARIADB_USER: timber
+  #      MARIADB_PASSWORD: ${DB_PASSWORD}
+  #      REPLICATION_PASSWORD: ${DB_PASSWORD}
+  #      GALERA: 'On'
+  #      NODE_NAME: node1-mariadb
+  #      CLUSTER_NAME: maria_cluster
+  #      CLUSTER_ADDRESS: gcomm://
+  #      TZ: Asia/Seoul
+  #    command:
+  #      - --character-set-server=utf8mb4
+  #      - --collation-server=utf8mb4_unicode_ci
+  #      - --lower_case_table_names=1
+  #      - --max-allowed-packet=512M
+  #      - --net-buffer-length=5048576
+  ##      - --wsrep-new-cluster
+  #    privileged: true
+  #    ulimits:
+  #      nofile:
+  #        soft: 600000
+  #        hard: 640000
+  #
+  #  timber-db-mariadb-2:
+  #    image: mariadb:11.3.2-jammy
+  #    container_name: timber-db-mariadb-2
+  #    restart: always
+  #    expose:
+  #      - 3306
+  #    networks:
+  #      - timber-bridge
+  #    shm_size: 128mb
+  #    ports:
+  #      - 23317:3306
+  #    volumes:
+  #      - ./database/mariadb/node2/data:/var/lib/mysql
+  #      - ./database/mariadb/node2/init:/docker-entrypoint-initdb.d
+  #      - ./database/mariadb/node2/logs:/var/log/mysql
+  #      - ./database/mariadb/node2/conf/galera.cnf:/etc/mysql/mariadb.conf.d/galera.cnf
+  #    environment:
+  #      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+  #      MARIADB_DATABASE: timber
+  #      MARIADB_USER: timber
+  #      MARIADB_PASSWORD: ${DB_PASSWORD}
+  #      REPLICATION_PASSWORD: ${DB_PASSWORD}
+  #      GALERA: 'On'
+  #      NODE_NAME: node2-mariadb
+  #      CLUSTER_NAME: maria_cluster
+  #      CLUSTER_ADDRESS: gcomm://
+  #      TZ: Asia/Seoul
+  #    command:
+  #      - --character-set-server=utf8mb4
+  #      - --collation-server=utf8mb4_unicode_ci
+  #      - --lower_case_table_names=1
+  #      - --max-allowed-packet=512M
+  #      - --net-buffer-length=5048576
+  #    depends_on:
+  #      - timber-db-mariadb-1
+  #    privileged: true
+  #    ulimits:
+  #      nofile:
+  #        soft: 600000
+  #        hard: 640000
+  #
+  #  timber-db-mariadb-3:
+  #    image: mariadb:11.3.2-jammy
+  #    container_name: timber-db-mariadb-3
+  #    restart: always
+  #    networks:
+  #      - timber-bridge
+  #    shm_size: 128mb
+  #    expose:
+  #      - 3306
+  #    ports:
+  #      - 23318:3306
+  #    volumes:
+  #      - ./database/mariadb/node3/data:/var/lib/mysql
+  #      - ./database/mariadb/node3/init:/docker-entrypoint-initdb.d
+  #      - ./database/mariadb/node3/logs:/var/log/mysql
+  #      - ./database/mariadb/node3/conf/galera.cnf:/etc/mysql/mariadb.conf.d/galera.cnf
+  #    environment:
+  #      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+  #      MARIADB_DATABASE: timber
+  #      MARIADB_USER: timber
+  #      MARIADB_PASSWORD: ${DB_PASSWORD}
+  #      REPLICATION_PASSWORD: ${DB_PASSWORD}
+  #      GALERA: 'On'
+  #      NODE_NAME: node3-mariadb
+  #      CLUSTER_NAME: maria_cluster
+  #      CLUSTER_ADDRESS: gcomm://
+  #      TZ: Asia/Seoul
+  #    command:
+  #      - --character-set-server=utf8mb4
+  #      - --collation-server=utf8mb4_unicode_ci
+  #      - --lower_case_table_names=1
+  #      - --max-allowed-packet=512M
+  #      - --net-buffer-length=5048576
+  #    depends_on:
+  #      - timber-db-mariadb-1
+  #      - timber-db-mariadb-2
+  #    privileged: true
+  #    ulimits:
+  #      nofile:
+  #        soft: 600000
+  #        hard: 640000
+  #
+  #  timber-db-mariadb-porxysql:
+  #    image: proxysql/proxysql
+  #    container_name: timber-db-mariadb-porxysql
+  #    restart: always
+  #    networks:
+  #      - timber-bridge
+  #    ports:
+  #      - 26032:6032
+  #      - 26033:6033
+  #      - 26070:6070
+  #    volumes:
+  #      - ./database/mariadb/proxysql.cnf:/etc/proxysql.cnf
+  #    depends_on:
+  #      - timber-db-mariadb-1
+  #      - timber-db-mariadb-2
+  #      - timber-db-mariadb-3
+
+  timber-db-redis:
+    image: redis:7.2.4
+    container_name: timber-db-redis
+    restart: always
+    networks:
+      - timber-bridge
+    shm_size: 128mb
+    ports:
+      - 26379:6379
+    volumes:
+      - ./database/redis/data:/data
+      - ./database/redis/conf:/etc/redis
+      - ./database/redis/logs:/var/log/redis
+    environment:
+      REDIS_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+
+  timber-mq-zookeeper:
+    image: zookeeper:3.8.4-jre-17
+    container_name: timber-mq-zookeeper
+    restart: unless-stopped
+    networks:
+      - timber-bridge
+    expose:
+      - 2181
+      - 9101
+    ports:
+      - 22181:2181
+    volumes:
+      - ./mq/zookeeper/data:/data
+      - ./mq/zookeeper/logs:/datalog
+    environment:
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_INIT_LIMIT: 5
+      ZOOKEEPER_SYNC_LIMIT: 2
+      KAFKA_JMX_PORT: 9101
+
+  timber-mq-kafka-1:
+    image: bitnami/kafka:3.7.0
+    container_name: timber-mq-kafka-1
+    restart: unless-stopped
+    networks:
+      - timber-bridge
+    expose:
+      - 9101
+      - 9092
+    ports:
+      - 29092:9092
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: timber-mq-zookeeper:2181
+      KAFKA_ADVERTISED_HOST_NAME: ${EXPOSED_HOSTNAME}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${EXPOSED_HOSTNAME}:29092
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=${EXPOSED_HOSTNAME} -Dcom.sun.management.jmxremote.rmi.port=9091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    depends_on:
+      - timber-mq-zookeeper
+
+  timber-mq-kafka-2:
+    image: bitnami/kafka:3.7.0
+    container_name: timber-mq-kafka-2
+    restart: unless-stopped
+    networks:
+      - timber-bridge
+    expose:
+      - 9101
+      - 9092
+    ports:
+      - 29093:9092
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      KAFKA_BROKER_ID: 2
+      KAFKA_ZOOKEEPER_CONNECT: timber-mq-zookeeper:2181
+      KAFKA_ADVERTISED_HOST_NAME: ${EXPOSED_HOSTNAME}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${EXPOSED_HOSTNAME}:29093
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=${EXPOSED_HOSTNAME} -Dcom.sun.management.jmxremote.rmi.port=9091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    depends_on:
+      - timber-mq-zookeeper
+
+
+  timber-mq-kafka-3:
+    image: bitnami/kafka:3.7.0
+    container_name: timber-mq-kafka-3
+    restart: unless-stopped
+    networks:
+      - timber-bridge
+    expose:
+      - 9101
+      - 9092
+    ports:
+      - 29094:9092
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      KAFKA_BROKER_ID: 3
+      KAFKA_ZOOKEEPER_CONNECT: timber-mq-zookeeper:2181
+      KAFKA_ADVERTISED_HOST_NAME: ${EXPOSED_HOSTNAME}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://${EXPOSED_HOSTNAME}:29094
+      KAFKA_ADVERTISED_PORT: 9092
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_OPTS: -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Djava.rmi.server.hostname=${EXPOSED_HOSTNAME} -Dcom.sun.management.jmxremote.rmi.port=9091
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    depends_on:
+      - timber-mq-zookeeper
+
+  kafka-manager:
+    image: hlebalbau/kafka-manager:stable
+    container_name: timber-mq-kafka-manager
+    restart: unless-stopped
+    networks:
+      - timber-bridge
+    ports:
+      - 29000:9000
+    environment:
+      ZK_HOSTS: timber-mq-zookeeper:2181
+      APPLICATION_SECRET: "random-secret"
+      KM_ARGS: -Djava.net.preferIPv4Stack=true
+    depends_on:
+      - timber-mq-kafka-1
+      - timber-mq-kafka-2
+      - timber-mq-kafka-3
+      - timber-mq-zookeeper
+
+  timber-mq-kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: timber-mq-kafka-ui
+    restart: unless-stopped
+    networks:
+      - timber-bridge
+    ports:
+      - 28080:8080
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=Local-Kafka
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=timber-mq-kafka-1:9092,timber-mq-kafka-2:9092,timber-mq-kafka-3:9092
+      - DYNAMIC_CONFIG_ENABLED=true
+      - KAFKA_CLUSTERS_0_AUDIT_TOPICAUDITENABLED=true
+      - KAFKA_CLUSTERS_0_AUDIT_CONSOLEAUDITENABLED=true
+      #- KAFKA_CLUSTERS_0_METRICS_PORT=9999
+    depends_on:
+      - timber-mq-kafka-1
+      - timber-mq-kafka-2
+      - timber-mq-kafka-3
+      - timber-mq-zookeeper
+
+  timber-mq-kafka-exporter:
+    image: danielqsj/kafka-exporter
+    container_name: timber-mq-kafka-exporter
+    restart: unless-stopped
+    ports:
+      - 29308:9308
+    networks:
+      - timber-bridge
+#    command: ["--kafka.server=timber-mq-kafka-1:9092", "--kafka.server=timber-mq-kafka-2:9092", "--kafka.server=timber-mq-kafka-3:9092"]
+    command: ["--kafka.server=timber-mq-kafka-1:9092"]
+    depends_on:
+      - timber-mq-kafka-1
+      - timber-mq-kafka-2
+      - timber-mq-kafka-3
+      - timber-mq-zookeeper
+
+  timber-monitoring-prometheus:
+    image: prom/prometheus:main
+    container_name: timber-monitoring-prometheus
+    restart: unless-stopped
+    networks:
+      - timber-bridge
+    ports:
+      - 29090:9090
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=90d # 90일보다 오래된 metrics는 삭제
+      - --storage.tsdb.retention.size=10GB # 10GB를 넘을 시 오래된 metrics 삭제
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/proemtheus/consoles
+      - --web.enable-admin-api
+
+  timber-monitoring-grafana:
+    image: grafana/grafana
+    container_name: timber-monitoring-grafana
+    restart: unless-stopped
+    networks:
+      - timber-bridge
+    ports:
+      - 23000:3000
+    volumes:
+      - ./monitoring/grafana/data:/var/lib/grafana
+#    environment:
+#      - GF_SERVER_ROOT_URL:http://my.grafana.server/
+#      - GF_INSTALL_PLUGINS:grafana-clock-panel
+#      - GF_SECURITY_ADMIN_USER=admin # grafana 사용자 이름
+#      - GF_SECURITY_ADMIN_PASSWORD=admin # grafana 사용자 비밀번호
+#      - GF_USERS_ALLOW_SIGN_UP=false
+
+
