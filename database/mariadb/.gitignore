@@ -1,0 +1,4 @@
+data/*
+proxysql.cnf
+
+mariadb-secret.yaml
