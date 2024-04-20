@@ -2,9 +2,9 @@
 
 source util.sh
 
-# Check if podman-compose is installed
-if ! command -v podman-compose &> /dev/null; then
-    echo "Error: podman-compose is not installed. Please install podman-compose."
+# Check if docker-compose is installed
+if ! command -v docker-compose &> /dev/null; then
+    echo "Error: docker-compose is not installed. Please install docker-compose."
     exit 1
 fi
 
@@ -59,11 +59,11 @@ echo "##################CONTAINER###################"
 echo "###############################################"
 
 echo "Stopping containers..."
-podman-compose -f "$compose_file" down
+docker-compose -f "$compose_file" down
 echo "Containers stopped."
 echo "###############################################"
 
-podman ps -a
+docker ps -a
 
 echo "###############################################"
 
