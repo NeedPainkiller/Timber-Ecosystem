@@ -1,13 +1,12 @@
-# TIMBER-ECOSYSTEM-DATABASE-MARIADB
+# TIMBER-ECOSYSTEM-DATABASE-MARIADB-APPLICATION
 https://sesamedisk.com/mysql-cluster-deploy-galera-with-mariadb-proxysql/
 https://engmisankim.tistory.com/64
 
-## Galera Cluster
+## Galera Cluster 사용 시
 - 클러스터 실행 후 timber-db-mariadb-1 의 --wsrep-new-cluster 옵션을 주석처리해야 재시작 이슈 없음
 
 
-
-## ProxySQL
+### ProxySQL
 - 컨테이너 접속
 ```Bash
 docker exec -it [proxysql container id] bash

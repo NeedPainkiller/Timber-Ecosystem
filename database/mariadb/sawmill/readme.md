@@ -4,6 +4,7 @@
 - 감사로그 저장을 위한 Achive 엔진 Mariadb
 
 ### Dockerfile
+
 ```Dockerfile
 FROM mariadb:11.3.2-jammy
 
@@ -20,7 +21,7 @@ default_storage_engine=ARCHIVE
 
 ### 빌드 
 ```bash
-docker build -t mariadb-audit .
+docker build -t timber-database-mariadb-sawmill .
 ```
 
 ### archive 엔진 설치

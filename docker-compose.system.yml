@@ -75,9 +75,36 @@ services:
   #      - --collation-server=utf8mb4_unicode_ci
   #      - --lower_case_table_names=1
 
-  timber-db-mariadb:
+  timber-database-mariadb-config:
     image: mariadb:11.3.2-jammy
-    container_name: timber-db-mariadb
+    container_name: timber-database-mariadb-config
+    restart: always
+    networks:
+      - timber-bridge
+    shm_size: 128mb
+    ports:
+      - 23306:3306
+    volumes:
+      - ./database/mariadb/config/data/data:/var/lib/mysql
+      - ./database/mariadb/config/data/init:/docker-entrypoint-initdb.d
+      - ./database/mariadb/config/data/logs:/var/log/mysql
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
+      MARIADB_DATABASE: timber-config
+      MARIADB_USER: timber-config
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --lower_case_table_names=1
+      - --max-allowed-packet=512M
+      - --net-buffer-length=5048576
+
+
+  timber-database-mariadb-application:
+    image: mariadb:11.3.2-jammy
+    container_name: timber-database-mariadb-application
     restart: always
     networks:
       - timber-bridge
@@ -85,14 +112,14 @@ services:
     ports:
       - 23307:3306
     volumes:
-      - ./database/mariadb/data/data:/var/lib/mysql
-      - ./database/mariadb/data/init:/docker-entrypoint-initdb.d
-      - ./database/mariadb/data/logs:/var/log/mysql
+      - ./database/mariadb/application/data/data:/var/lib/mysql
+      - ./database/mariadb/application/data/init:/docker-entrypoint-initdb.d
+      - ./database/mariadb/application/data/logs:/var/log/mysql
     environment:
       MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
       MARIADB_ROOT_HOST: localhost
-      MARIADB_DATABASE: timber
-      MARIADB_USER: timber
+      MARIADB_DATABASE: timber-application
+      MARIADB_USER: timber-application
       MARIADB_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Seoul
     command:
@@ -102,9 +129,9 @@ services:
       - --max-allowed-packet=512M
       - --net-buffer-length=5048576
 
-  timber-db-mariadb-audit:
-    image: mariadb-audit
-    container_name: timber-db-mariadb-audit
+  timber-database-mariadb-sawmill:
+    image: timber-database-mariadb-sawmill
+    container_name: timber-database-mariadb-sawmill
     restart: always
     networks:
       - timber-bridge
@@ -112,14 +139,14 @@ services:
     ports:
       - 23308:3306
     volumes:
-      - ./database/mariadb-audit/data/data:/var/lib/mysql
-      - ./database/mariadb-audit/data/init:/docker-entrypoint-initdb.d
-      - ./database/mariadb-audit/data/logs:/var/log/mysql
+      - ./database/mariadb/sawmill/data/data:/var/lib/mysql
+      - ./database/mariadb/sawmill/data/init:/docker-entrypoint-initdb.d
+      - ./database/mariadb/sawmill/data/logs:/var/log/mysql
     environment:
-      MARIADB_ROOT_PASSWORD: passwd
+      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
       MARIADB_ROOT_HOST: localhost
-      MARIADB_DATABASE: timber-audit
-      MARIADB_USER: timber
+      MARIADB_DATABASE: timber-sawmill
+      MARIADB_USER: timber-sawmill
       MARIADB_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Seoul
     command:
@@ -128,147 +155,6 @@ services:
       - --lower_case_table_names=1
       - --max-allowed-packet=512M
       - --net-buffer-length=5048576
-
-
-  #  timber-db-mariadb-1:
-  #    image: mariadb:11.3.2-jammy
-  #    container_name: timber-db-mariadb-1
-  #    restart: always
-  #    networks:
-  #      - timber-bridge
-  #    shm_size: 128mb
-  #    expose:
-  #      - 3306
-  #    ports:
-  #      - 23316:3306
-  #    volumes:
-  #      - ./database/mariadb/node1/data:/var/lib/mysql
-  #      - ./database/mariadb/node1/init:/docker-entrypoint-initdb.d
-  #      - ./database/mariadb/node1/logs:/var/log/mysql
-  #      - ./database/mariadb/node1/conf/galera.cnf:/etc/mysql/mariadb.conf.d/galera.cnf
-  #    environment:
-  #      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-  #      MARIADB_DATABASE: timber
-  #      MARIADB_USER: timber
-  #      MARIADB_PASSWORD: ${DB_PASSWORD}
-  #      REPLICATION_PASSWORD: ${DB_PASSWORD}
-  #      GALERA: 'On'
-  #      NODE_NAME: node1-mariadb
-  #      CLUSTER_NAME: maria_cluster
-  #      CLUSTER_ADDRESS: gcomm://
-  #      TZ: Asia/Seoul
-  #    command:
-  #      - --character-set-server=utf8mb4
-  #      - --collation-server=utf8mb4_unicode_ci
-  #      - --lower_case_table_names=1
-  #      - --max-allowed-packet=512M
-  #      - --net-buffer-length=5048576
-  ##      - --wsrep-new-cluster
-  #    privileged: true
-  #    ulimits:
-  #      nofile:
-  #        soft: 600000
-  #        hard: 640000
-  #
-  #  timber-db-mariadb-2:
-  #    image: mariadb:11.3.2-jammy
-  #    container_name: timber-db-mariadb-2
-  #    restart: always
-  #    expose:
-  #      - 3306
-  #    networks:
-  #      - timber-bridge
-  #    shm_size: 128mb
-  #    ports:
-  #      - 23317:3306
-  #    volumes:
-  #      - ./database/mariadb/node2/data:/var/lib/mysql
-  #      - ./database/mariadb/node2/init:/docker-entrypoint-initdb.d
-  #      - ./database/mariadb/node2/logs:/var/log/mysql
-  #      - ./database/mariadb/node2/conf/galera.cnf:/etc/mysql/mariadb.conf.d/galera.cnf
-  #    environment:
-  #      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-  #      MARIADB_DATABASE: timber
-  #      MARIADB_USER: timber
-  #      MARIADB_PASSWORD: ${DB_PASSWORD}
-  #      REPLICATION_PASSWORD: ${DB_PASSWORD}
-  #      GALERA: 'On'
-  #      NODE_NAME: node2-mariadb
-  #      CLUSTER_NAME: maria_cluster
-  #      CLUSTER_ADDRESS: gcomm://
-  #      TZ: Asia/Seoul
-  #    command:
-  #      - --character-set-server=utf8mb4
-  #      - --collation-server=utf8mb4_unicode_ci
-  #      - --lower_case_table_names=1
-  #      - --max-allowed-packet=512M
-  #      - --net-buffer-length=5048576
-  #    depends_on:
-  #      - timber-db-mariadb-1
-  #    privileged: true
-  #    ulimits:
-  #      nofile:
-  #        soft: 600000
-  #        hard: 640000
-  #
-  #  timber-db-mariadb-3:
-  #    image: mariadb:11.3.2-jammy
-  #    container_name: timber-db-mariadb-3
-  #    restart: always
-  #    networks:
-  #      - timber-bridge
-  #    shm_size: 128mb
-  #    expose:
-  #      - 3306
-  #    ports:
-  #      - 23318:3306
-  #    volumes:
-  #      - ./database/mariadb/node3/data:/var/lib/mysql
-  #      - ./database/mariadb/node3/init:/docker-entrypoint-initdb.d
-  #      - ./database/mariadb/node3/logs:/var/log/mysql
-  #      - ./database/mariadb/node3/conf/galera.cnf:/etc/mysql/mariadb.conf.d/galera.cnf
-  #    environment:
-  #      MARIADB_ROOT_PASSWORD: ${DB_PASSWORD}
-  #      MARIADB_DATABASE: timber
-  #      MARIADB_USER: timber
-  #      MARIADB_PASSWORD: ${DB_PASSWORD}
-  #      REPLICATION_PASSWORD: ${DB_PASSWORD}
-  #      GALERA: 'On'
-  #      NODE_NAME: node3-mariadb
-  #      CLUSTER_NAME: maria_cluster
-  #      CLUSTER_ADDRESS: gcomm://
-  #      TZ: Asia/Seoul
-  #    command:
-  #      - --character-set-server=utf8mb4
-  #      - --collation-server=utf8mb4_unicode_ci
-  #      - --lower_case_table_names=1
-  #      - --max-allowed-packet=512M
-  #      - --net-buffer-length=5048576
-  #    depends_on:
-  #      - timber-db-mariadb-1
-  #      - timber-db-mariadb-2
-  #    privileged: true
-  #    ulimits:
-  #      nofile:
-  #        soft: 600000
-  #        hard: 640000
-  #
-  #  timber-db-mariadb-porxysql:
-  #    image: proxysql/proxysql
-  #    container_name: timber-db-mariadb-porxysql
-  #    restart: always
-  #    networks:
-  #      - timber-bridge
-  #    ports:
-  #      - 26032:6032
-  #      - 26033:6033
-  #      - 26070:6070
-  #    volumes:
-  #      - ./database/mariadb/proxysql.cnf:/etc/proxysql.cnf
-  #    depends_on:
-  #      - timber-db-mariadb-1
-  #      - timber-db-mariadb-2
-  #      - timber-db-mariadb-3
 
   timber-db-redis:
     image: redis:7.2.4
@@ -436,52 +322,53 @@ services:
       - timber-mq-kafka-3
       - timber-mq-zookeeper
 
-  timber-mq-kafka-exporter:
-    image: danielqsj/kafka-exporter
-    container_name: timber-mq-kafka-exporter
-    restart: unless-stopped
-    ports:
-      - 29308:9308
-    networks:
-      - timber-bridge
-#    command: ["--kafka.server=timber-mq-kafka-1:9092", "--kafka.server=timber-mq-kafka-2:9092", "--kafka.server=timber-mq-kafka-3:9092"]
-    command: ["--kafka.server=timber-mq-kafka-1:9092"]
-    depends_on:
-      - timber-mq-kafka-1
-      - timber-mq-kafka-2
-      - timber-mq-kafka-3
-      - timber-mq-zookeeper
+#  timber-mq-kafka-exporter:
+#    image: danielqsj/kafka-exporter
+#    container_name: timber-mq-kafka-exporter
+#    restart: unless-stopped
+#    ports:
+#      - 29308:9308
+#    networks:
+#      - timber-bridge
+##    command: ["--kafka.server=timber-mq-kafka-1:9092", "--kafka.server=timber-mq-kafka-2:9092", "--kafka.server=timber-mq-kafka-3:9092"]
+#    command: ["--kafka.server=timber-mq-kafka-1:9092"]
+#    depends_on:
+#      - timber-mq-kafka-1
+#      - timber-mq-kafka-2
+#      - timber-mq-kafka-3
+#      - timber-mq-zookeeper
 
-  timber-monitoring-prometheus:
-    image: prom/prometheus:main
-    container_name: timber-monitoring-prometheus
-    restart: unless-stopped
-    networks:
-      - timber-bridge
-    ports:
-      - 29090:9090
-    volumes:
-      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/prometheus/data:/prometheus
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-      - --storage.tsdb.path=/prometheus
-      - --storage.tsdb.retention.time=90d # 90일보다 오래된 metrics는 삭제
-      - --storage.tsdb.retention.size=10GB # 10GB를 넘을 시 오래된 metrics 삭제
-      - --web.console.libraries=/usr/share/prometheus/console_libraries
-      - --web.console.templates=/usr/share/proemtheus/consoles
-      - --web.enable-admin-api
+#  timber-monitoring-prometheus:
+#    image: prom/prometheus:main
+#    container_name: timber-monitoring-prometheus
+#    restart: unless-stopped
+#    networks:
+#      - timber-bridge
+#    ports:
+#      - 29090:9090
+#    volumes:
+#      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+#      - ./monitoring/prometheus/data:/prometheus
+#    command:
+#      - --config.file=/etc/prometheus/prometheus.yml
+#      - --storage.tsdb.path=/prometheus
+#      - --storage.tsdb.retention.time=90d # 90일보다 오래된 metrics는 삭제
+#      - --storage.tsdb.retention.size=10GB # 10GB를 넘을 시 오래된 metrics 삭제
+#      - --web.console.libraries=/usr/share/prometheus/console_libraries
+#      - --web.console.templates=/usr/share/proemtheus/consoles
+#      - --web.enable-admin-api
+#
+#  timber-monitoring-grafana:
+#    image: grafana/grafana
+#    container_name: timber-monitoring-grafana
+#    restart: unless-stopped
+#    networks:
+#      - timber-bridge
+#    ports:
+#      - 23000:3000
+#    volumes:
+#      - ./monitoring/grafana/data:/var/lib/grafana
 
-  timber-monitoring-grafana:
-    image: grafana/grafana
-    container_name: timber-monitoring-grafana
-    restart: unless-stopped
-    networks:
-      - timber-bridge
-    ports:
-      - 23000:3000
-    volumes:
-      - ./monitoring/grafana/data:/var/lib/grafana
 #    environment:
 #      - GF_SERVER_ROOT_URL:http://my.grafana.server/
 #      - GF_INSTALL_PLUGINS:grafana-clock-panel
