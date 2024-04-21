@@ -1,4 +1,4 @@
-data/*
+data/data
 proxysql.cnf
 
 mariadb-secret.yaml
