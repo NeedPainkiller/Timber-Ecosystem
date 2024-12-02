@@ -28,9 +28,26 @@ services:
   #    environment:
   #      - TZ=Asia/Seoul
 
-  timber-db-postgresql:
+#  timber-vault:
+#    image: vault:1.13.3
+#    container_name: timber-vault
+#    restart: always
+#    networks:
+#      - timber-bridge
+#    cap_add:
+#      - IPC_LOCK # Vault가 메모리를 잠그고 디스크로 교체되는 것을 방지, 메모리 스왑 공격 보호
+#    ports:
+#      - 28200:8200
+#    volumes:
+#      - ./vault/config:/vault/config
+#      - ./vault/file:/vault/file
+#      - ./vault/logs:/vault/logs
+#    command:
+#      - server
+
+  timber-database-postgresql-config:
     image: postgres:16.2
-    container_name: timber-db-postgresql
+    container_name: timber-database-postgresql-config
     restart: always
     networks:
       - timber-bridge
@@ -38,10 +55,10 @@ services:
     ports:
       - 25432:5432
     volumes:
-      - ./database/postgresql/data:/var/lib/postgresql/data
-      - ./database/postgresql/init:/docker-entrypoint-initdb.d
-      - ./database/postgresql/logs:/var/log/postgresql
-      - ./database/postgresql/conf:/etc/postgresql
+      - ./database/postgresql/config/data/data:/var/lib/postgresql/data
+      - ./database/postgresql/config/data/init:/docker-entrypoint-initdb.d
+      - ./database/postgresql/config/data/logs:/var/log/postgresql
+      - ./database/postgresql/config/data/conf:/etc/postgresql
     environment:
       POSTGRES_USER: timber
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -49,6 +66,52 @@ services:
       PGDATA: /var/lib/postgresql/data/pgdata
       TZ: Asia/Seoul
       POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C.utf8 --lc-ctype=C.utf8'
+
+  timber-database-postgresql-application:
+    image: postgres:16.2
+    container_name: timber-database-postgresql-application
+    restart: always
+    networks:
+      - timber-bridge
+    shm_size: 128mb
+    ports:
+      - 25433:5432
+    volumes:
+      - ./database/postgresql/application/data/data:/var/lib/postgresql/data
+      - ./database/postgresql/application/data/init:/docker-entrypoint-initdb.d
+      - ./database/postgresql/application/data/logs:/var/log/postgresql
+      - ./database/postgresql/application/data/conf:/etc/postgresql
+    environment:
+      POSTGRES_USER: timber
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: timber
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: Asia/Seoul
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C.utf8 --lc-ctype=C.utf8'
+
+
+  timber-database-postgresql-sawmill:
+    image: postgres:16.2
+    container_name: timber-database-postgresql-sawmill
+    restart: always
+    networks:
+      - timber-bridge
+    shm_size: 128mb
+    ports:
+      - 25434:5432
+    volumes:
+      - ./database/postgresql/sawmill/data/data:/var/lib/postgresql/data
+      - ./database/postgresql/sawmill/data/init:/docker-entrypoint-initdb.d
+      - ./database/postgresql/sawmill/data/logs:/var/log/postgresql
+      - ./database/postgresql/sawmill/data/conf:/etc/postgresql
+    environment:
+      POSTGRES_USER: timber
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: timber
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: Asia/Seoul
+      POSTGRES_INITDB_ARGS: '--encoding=UTF-8 --lc-collate=C.utf8 --lc-ctype=C.utf8'
+
 
   #  timber-db-mysql:
   #    image: mysql:8.3.0
